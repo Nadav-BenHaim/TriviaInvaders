@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Space Trivia Invaders</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      background: #000;
+      touch-action: none;
+    }
+    #triviaScreen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.5em;
+      padding: 20px;
+      display: none;
+      z-index: 2;
+    }
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      z-index: 3;
+    }
+    .btn {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid white;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: none;
+    }
+    .btn:active {
+      background: white;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div id="triviaScreen" onclick="startNextLevel()">
+    <div id="triviaText">Trivia goes here</div>
+  </div>
+
+  <!-- Mobile Controls -->
+  <div id="controls">
+    <div class="btn" id="leftBtn">⟵</div>
+    <div class="btn" id="shootBtn">⭳</div>
+    <div class="btn" id="rightBtn">⟶</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const trivia = [
+      "The Moon is moving away from Earth at a rate of 3.8 cm per year!",
+      "Venus spins backward — its sun rises in the west!",
+      "A day on Jupiter is only 10 hours long.",
+      "Neutron stars can spin at 600 times per second!"
+    ];
+
+    let player = { x: 180, y: 550, width: 40, height: 10 };
+    let bullets = [];
+    let enemies = [];
+    let keys = {};
+    let gameRunning = true;
+    let triviaIndex = 0;
+
+    function createEnemies() {
+      enemies = [];
+      for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 3; y++) {
+          enemies.push({ x: x * 60 + 30, y: y * 40 + 30, width: 30, height: 20 });
+        }
+      }
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = "white";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawEnemies() {
+      ctx.fillStyle = "lime";
+      enemies.forEach(e => {
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+      });
+    }
+
+    function drawBullets() {
+      ctx.fillStyle = "red";
+      bullets.forEach(b => {
+        ctx.fillRect(b.x, b.y, 4, 10);
+      });
+    }
+
+    function update() {
+      if (!gameRunning) return;
+
+      if (keys["left"] && player.x > 0) player.x -= 4;
