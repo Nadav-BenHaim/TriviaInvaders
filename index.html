@@ -14,8 +14,9 @@
     }
     canvas {
       display: block;
+      width: 100vw;
+      height: 100vh;
       background: #000;
-      touch-action: none;
     }
     #triviaScreen {
       position: absolute;
@@ -31,45 +32,12 @@
       display: none;
       z-index: 2;
     }
-    #controls {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      display: flex;
-      justify-content: space-around;
-      z-index: 3;
-    }
-    .btn {
-      width: 80px;
-      height: 80px;
-      background: rgba(255,255,255,0.1);
-      border: 2px solid white;
-      border-radius: 50%;
-      color: white;
-      font-size: 1.5em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      touch-action: none;
-    }
-    .btn:active {
-      background: white;
-      color: black;
-    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas" width="400" height="600"></canvas>
   <div id="triviaScreen" onclick="startNextLevel()">
     <div id="triviaText">Trivia goes here</div>
-  </div>
-
-  <!-- Mobile Controls -->
-  <div id="controls">
-    <div class="btn" id="leftBtn">⟵</div>
-    <div class="btn" id="shootBtn">⭳</div>
-    <div class="btn" id="rightBtn">⟶</div>
   </div>
 
   <script>
@@ -121,4 +89,69 @@
     function update() {
       if (!gameRunning) return;
 
-      if (keys["left"] && player.x > 0) player.x -= 4;
+      if (keys["ArrowLeft"] && player.x > 0) player.x -= 4;
+      if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += 4;
+
+      bullets = bullets.filter(b => b.y > 0);
+      bullets.forEach(b => b.y -= 6);
+
+      bullets.forEach((b, i) => {
+        enemies.forEach((e, j) => {
+          if (
+            b.x > e.x && b.x < e.x + e.width &&
+            b.y > e.y && b.y < e.y + e.height
+          ) {
+            enemies.splice(j, 1);
+            bullets.splice(i, 1);
+          }
+        });
+      });
+
+      if (enemies.length === 0) {
+        showTrivia();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawEnemies();
+      drawBullets();
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function shoot() {
+      bullets.push({ x: player.x + player.width / 2, y: player.y });
+    }
+
+    document.addEventListener('keydown', e => {
+      keys[e.key] = true;
+      if (e.key === ' ') shoot();
+    });
+    document.addEventListener('keyup', e => keys[e.key] = false);
+
+    function showTrivia() {
+      gameRunning = false;
+      const screen = document.getElementById('triviaScreen');
+      const text = document.getElementById('triviaText');
+      text.textContent = trivia[triviaIndex % trivia.length];
+      screen.style.display = 'flex';
+    }
+
+    function startNextLevel() {
+      triviaIndex++;
+      createEnemies();
+      gameRunning = true;
+      document.getElementById('triviaScreen').style.display = 'none';
+    }
+
+    createEnemies();
+    loop();
+  </script>
+</body>
+</html>
